@@ -14,7 +14,6 @@ import signal
 import sys
 import asyncio
 from tools import open_url
-from kb import get_kb_answer
 
 # Set up logging
 logging.basicConfig(
@@ -41,35 +40,12 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 load_dotenv()
 
-
-@function_tool
-async def answer_hotel_question(question: str) -> str:
-    """
-    Answer questions about Grand Luxe Hotel by referencing the knowledge base.
-
-    Args:
-        question: A question about the hotel's services, amenities, policies, or information.
-
-    Returns:
-        A relevant answer based on the hotel's knowledge base.
-    """
-    logger.info(f"answer_hotel_question called with question: {question}")
-    try:
-        answer = get_kb_answer(question)
-        logger.info(
-            f"Knowledge base answer retrieved successfully. Answer length: {len(answer)}")
-        return answer
-    except Exception as e:
-        logger.error(f"Error in answer_hotel_question: {str(e)}")
-        return f"I'm having trouble accessing the hotel information right now. Please try again later."
-
-
 class Assistant(Agent):
     def __init__(self) -> None:
         logger.info(
-            "Initializing Assistant agent with tools: [open_url, answer_hotel_question]")
+            "Initializing Assistant agent with tools: [open_url]")
         super().__init__(instructions=AGENT_INSTRUCTION,
-                         tools=[open_url, answer_hotel_question],)
+                         tools=[open_url],)
         logger.info("Assistant agent initialized successfully")
 
 

@@ -17,9 +17,6 @@ uuid
 
 # AI / ML
 pydantic-ai-slim[google,mcp]
-sentence-transformers
-torch
-tqdm
 
 # Timezone
 tzdata
