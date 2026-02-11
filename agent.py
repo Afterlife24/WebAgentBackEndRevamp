@@ -26,12 +26,14 @@ logger = logging.getLogger(__name__)
 # Global variable to track if shutdown is requested
 shutdown_requested = False
 
+
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully"""
     global shutdown_requested
     logger.info(f"Received signal {signum}. Initiating graceful shutdown...")
     shutdown_requested = True
     sys.exit(0)
+
 
 # Register signal handlers
 signal.signal(signal.SIGINT, signal_handler)
@@ -44,17 +46,18 @@ load_dotenv()
 async def answer_hotel_question(question: str) -> str:
     """
     Answer questions about Grand Luxe Hotel by referencing the knowledge base.
-    
+
     Args:
         question: A question about the hotel's services, amenities, policies, or information.
-        
+
     Returns:
         A relevant answer based on the hotel's knowledge base.
     """
     logger.info(f"answer_hotel_question called with question: {question}")
     try:
         answer = get_kb_answer(question)
-        logger.info(f"Knowledge base answer retrieved successfully. Answer length: {len(answer)}")
+        logger.info(
+            f"Knowledge base answer retrieved successfully. Answer length: {len(answer)}")
         return answer
     except Exception as e:
         logger.error(f"Error in answer_hotel_question: {str(e)}")
@@ -63,7 +66,8 @@ async def answer_hotel_question(question: str) -> str:
 
 class Assistant(Agent):
     def __init__(self) -> None:
-        logger.info("Initializing Assistant agent with tools: [open_url, answer_hotel_question]")
+        logger.info(
+            "Initializing Assistant agent with tools: [open_url, answer_hotel_question]")
         super().__init__(instructions=AGENT_INSTRUCTION,
                          tools=[open_url, answer_hotel_question],)
         logger.info("Assistant agent initialized successfully")
@@ -71,21 +75,22 @@ class Assistant(Agent):
 
 async def entrypoint(ctx: agents.JobContext):
     global shutdown_requested
-    
+
     logger.info("Starting agent entrypoint")
     logger.info(f"Job context: {ctx}")
-    
+
     try:
         session = AgentSession(
             llm=google.beta.realtime.RealtimeModel(
                 voice="Aoede",  # Female voice
             ),
         )
-        logger.info("AgentSession created with Google Realtime Model (voice: Aoede)")
+        logger.info(
+            "AgentSession created with Google Realtime Model (voice: Aoede)")
 
         mcp_server_url = os.environ.get("N8N_MCP_SERVER_URL")
         logger.info(f"MCP Server URL from environment: {mcp_server_url}")
-        
+
         mcp_server = MCPServerSse(
             params={"url": mcp_server_url},
             cache_tools_list=True,
@@ -122,11 +127,11 @@ async def entrypoint(ctx: agents.JobContext):
             instructions=SESSION_INSTRUCTION,
         )
         logger.info("Initial reply generated successfully")
-        
+
         # Keep the session alive until shutdown is requested
         while not shutdown_requested:
             await asyncio.sleep(1)
-            
+
     except Exception as e:
         logger.error(f"Error in agent entrypoint: {e}")
         raise
@@ -135,4 +140,9 @@ async def entrypoint(ctx: agents.JobContext):
 
 
 if __name__ == "__main__":
-    agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint))
+    agents.cli.run_app(
+        agents.WorkerOptions(
+            entrypoint_fnc=entrypoint,
+            port=8081,  # Explicitly set port 8081 for web agent
+        )
+    )
