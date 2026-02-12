@@ -3,7 +3,7 @@ livekit-api
 
 # Agents and plugins
 livekit-agents
-livekit-plugins-google
+livekit-plugins-openai
 livekit-plugins-noise-cancellation
 
 # Flask + async support
@@ -16,7 +16,7 @@ requests
 uuid
 
 # AI / ML
-pydantic-ai-slim[google,mcp]
+pydantic-ai-slim[openai,mcp]
 
 # Timezone
 tzdata

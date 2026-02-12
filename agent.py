@@ -3,7 +3,7 @@ from prompts import AGENT_INSTRUCTION, SESSION_INSTRUCTION
 from livekit import agents
 from livekit.agents import AgentSession, Agent, RoomInputOptions, function_tool
 from livekit.plugins import (
-    google,
+    openai,
     noise_cancellation,
 )
 from mcp_client import MCPServerSse
@@ -40,6 +40,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 load_dotenv()
 
+
 class Assistant(Agent):
     def __init__(self) -> None:
         logger.info(
@@ -57,12 +58,13 @@ async def entrypoint(ctx: agents.JobContext):
 
     try:
         session = AgentSession(
-            llm=google.beta.realtime.RealtimeModel(
-                voice="Aoede",  # Female voice
+            llm=openai.realtime.RealtimeModel(
+                voice="alloy",  # OpenAI voice options: alloy, echo, fable, onyx, nova, shimmer
+                temperature=0.2,
             ),
         )
         logger.info(
-            "AgentSession created with Google Realtime Model (voice: Aoede)")
+            "AgentSession created with OpenAI Realtime Model (voice: alloy)")
 
         mcp_server_url = os.environ.get("N8N_MCP_SERVER_URL")
         logger.info(f"MCP Server URL from environment: {mcp_server_url}")
