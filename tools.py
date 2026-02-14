@@ -46,13 +46,13 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
     section_map = {
         "home": ("http://localhost:3000", "home page"),
         "products": ("http://localhost:3000", "products section"),
-        "voice": ("http://localhost:3000#voice", "Voice/Calling Agent section"),
-        "calling": ("http://localhost:3000#voice", "Voice/Calling Agent section"),
-        "web": ("http://localhost:3000#web", "Web Agent section"),
-        "whatsapp": ("http://localhost:3000#whatsapp", "WhatsApp Agent section"),
-        "vision": ("http://localhost:3000#vision", "Vision section"),
-        "services": ("http://localhost:3000#services", "Services section"),
-        "testimonials": ("http://localhost:3000#testimonials", "Testimonials section"),
+        "voice": ("http://localhost:3000?action=expand&section=voice", "Voice/Calling Agent section with details expanded"),
+        "calling": ("http://localhost:3000?action=expand&section=voice", "Voice/Calling Agent section with details expanded"),
+        "web": ("http://localhost:3000?action=expand&section=web", "Web Agent section with details expanded"),
+        "whatsapp": ("http://localhost:3000?action=expand&section=whatsapp", "WhatsApp Agent section with details expanded"),
+        "vision": ("http://localhost:3000?action=scroll&section=vision", "Vision section"),
+        "services": ("http://localhost:3000?action=scroll&section=services", "Services section"),
+        "testimonials": ("http://localhost:3000?action=scroll&section=testimonials", "Testimonials section"),
         "pricing": ("http://localhost:3000/pricing", "Pricing page"),
         "about": ("http://localhost:3000/about", "About page"),
     }
@@ -65,6 +65,6 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
 
     try:
         webbrowser.open(url)
-        return f"Navigated to the {description}. The page should now be open in your browser."
+        return f"Navigated to the {description}. The page should now be open and automatically showing the relevant content."
     except Exception as e:
         return f"Failed to navigate to {description}. Error: {str(e)}"
