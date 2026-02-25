@@ -13,7 +13,7 @@ import logging
 import signal
 import sys
 import asyncio
-from tools import open_url, navigate_to_section
+from tools import open_url, navigate_to_section, confirm_language_switch
 
 # Set up logging
 logging.basicConfig(
@@ -44,9 +44,9 @@ load_dotenv()
 class Assistant(Agent):
     def __init__(self) -> None:
         logger.info(
-            "Initializing Assistant agent with tools: [open_url, navigate_to_section]")
+            "Initializing Assistant agent with tools: [open_url, navigate_to_section, confirm_language_switch]")
         super().__init__(instructions=AGENT_INSTRUCTION,
-                         tools=[open_url, navigate_to_section],)
+                         tools=[open_url, navigate_to_section, confirm_language_switch],)
         logger.info("Assistant agent initialized successfully")
 
 

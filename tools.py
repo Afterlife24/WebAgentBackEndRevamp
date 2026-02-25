@@ -1,5 +1,34 @@
 from livekit.agents import function_tool, RunContext
 import webbrowser
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+@function_tool
+async def confirm_language_switch(language: str, language_code: str, context: RunContext) -> str:
+    """
+    Called when you want to confirm a language switch with the user.
+    Use this ONLY when the user explicitly requests to speak in another language
+    or consistently speaks 2-3 complete sentences in another language.
+
+    DO NOT call this for:
+    - Names in other languages
+    - Single words or phrases
+    - Background noise
+    - Unclear audio
+
+    Args:
+        language: Full language name (e.g., "Spanish", "Arabic", "German")
+        language_code: ISO language code (e.g., "es", "ar", "de")
+
+    Returns:
+        Confirmation that language switch is approved
+    """
+    logger.info(f"Language switch requested: {language} ({language_code})")
+
+    # Log the language switch for analytics
+    return f"Language switch to {language} confirmed. You may now respond in {language}. Remember to maintain the same helpful, professional tone."
 
 
 @function_tool
