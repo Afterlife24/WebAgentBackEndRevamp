@@ -1,6 +1,6 @@
-from livekit.agents import function_tool, RunContext
-import webbrowser
+from livekit.agents import function_tool, RunContext, get_job_context
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -34,20 +34,53 @@ async def confirm_language_switch(language: str, language_code: str, context: Ru
 @function_tool
 async def open_url(url: str, context: RunContext) -> str:
     """
-    Opens a URL in the user's default web browser.
+    Opens a URL in a new browser tab.
     Use this when the user explicitly asks to open an external website or link.
+    This is for external URLs only - use navigate_to_section for internal navigation.
     """
     try:
-        webbrowser.open(url)
-        return f"Opened {url} in your web browser."
+        # Get the room from job context
+        job_ctx = get_job_context()
+        room = job_ctx.room
+
+        # Get the first remote participant (the user)
+        if not room.remote_participants:
+            logger.warning("No remote participants found for open_url")
+            return f"I tried to open {url}, but no user is connected."
+
+        participant_identity = next(iter(room.remote_participants))
+
+        navigation_data = {
+            "type": "navigate",
+            "action": "open_url",
+            "url": url
+        }
+
+        # Use RPC to call the frontend method
+        try:
+            response = await room.local_participant.perform_rpc(
+                destination_identity=participant_identity,
+                method="navigate",
+                payload=json.dumps(navigation_data),
+                response_timeout=5.0
+            )
+            logger.info(
+                f"Sent open URL command via RPC: {navigation_data}, response: {response}")
+            return f"Opening {url} in a new tab."
+        except Exception as rpc_error:
+            logger.error(f"RPC call failed for open_url: {rpc_error}")
+            return f"I tried to open {url}, but the navigation feature is currently unavailable."
+
     except Exception as e:
+        logger.error(f"Failed to open URL: {str(e)}")
         return f"Failed to open {url}. Error: {str(e)}"
 
 
 @function_tool
 async def navigate_to_section(section: str, context: RunContext) -> str:
     """
-    Navigates to a specific section or page on the Afterlife website.
+    Navigates to a specific section or page on the Afterlife website IN THE SAME TAB where the user is interacting.
+    This provides a seamless experience without opening new tabs.
 
     Available sections:
     - "home" or "products": Main page with all three agent products
@@ -61,7 +94,7 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
     - "about": About us page
 
     Use this tool when users ask about specific features, products, or want to learn more about Afterlife.
-    Always ask for user permission before navigating.
+    The navigation happens in the same tab, so the user stays in context with the agent.
 
     Args:
         section: The section name to navigate to (e.g., "voice", "pricing", "about")
@@ -71,29 +104,64 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
     """
     section = section.lower().strip()
 
-    # Map sections to URLs and descriptions
+    # Map sections to React Router paths and descriptions
     section_map = {
-        "home": ("http://localhost:3000", "home page"),
-        "products": ("http://localhost:3000", "products section"),
-        "voice": ("http://localhost:3000?action=expand&section=voice", "Voice/Calling Agent section with details expanded"),
-        "calling": ("http://localhost:3000?action=expand&section=voice", "Voice/Calling Agent section with details expanded"),
-        "web": ("http://localhost:3000?action=expand&section=web", "Web Agent section with details expanded"),
-        "whatsapp": ("http://localhost:3000?action=expand&section=whatsapp", "WhatsApp Agent section with details expanded"),
-        "vision": ("http://localhost:3000?action=scroll&section=vision", "Vision section"),
-        "services": ("http://localhost:3000?action=scroll&section=services", "Services section"),
-        "testimonials": ("http://localhost:3000?action=scroll&section=testimonials", "Testimonials section"),
-        "pricing": ("http://localhost:3000/pricing", "Pricing page"),
-        "about": ("http://localhost:3000/about", "About page"),
+        "home": ("/", "home page", None),
+        "products": ("/", "products section", None),
+        "voice": ("/", "Voice/Calling Agent section", "voice"),
+        "calling": ("/", "Voice/Calling Agent section", "voice"),
+        "web": ("/", "Web Agent section", "web"),
+        "whatsapp": ("/", "WhatsApp Agent section", "whatsapp"),
+        "vision": ("/", "Vision section", "vision"),
+        "services": ("/", "Services section", "services"),
+        "testimonials": ("/", "Testimonials section", "testimonials"),
+        "pricing": ("/pricing", "Pricing page", None),
+        "about": ("/about", "About page", None),
     }
 
     if section not in section_map:
         available = ", ".join(section_map.keys())
         return f"Unknown section '{section}'. Available sections: {available}"
 
-    url, description = section_map[section]
+    path, description, scroll_to = section_map[section]
 
     try:
-        webbrowser.open(url)
-        return f"Navigated to the {description}. The page should now be open and automatically showing the relevant content."
+        # Get the room from job context
+        job_ctx = get_job_context()
+        room = job_ctx.room
+
+        # Get the first remote participant (the user)
+        if not room.remote_participants:
+            logger.warning(
+                "No remote participants found for navigate_to_section")
+            return f"I can help you navigate to the {description}, but no user is connected."
+
+        participant_identity = next(iter(room.remote_participants))
+
+        navigation_data = {
+            "type": "navigate",
+            "action": "navigate_same_tab",
+            "path": path,
+            "section": scroll_to,
+            "description": description
+        }
+
+        # Use RPC to call the frontend method
+        try:
+            response = await room.local_participant.perform_rpc(
+                destination_identity=participant_identity,
+                method="navigate",
+                payload=json.dumps(navigation_data),
+                response_timeout=5.0
+            )
+            logger.info(
+                f"Sent same-tab navigation command via RPC: {navigation_data}, response: {response}")
+            return f"Navigating to the {description}. The page will update shortly."
+        except Exception as rpc_error:
+            logger.error(
+                f"RPC call failed for navigate_to_section: {rpc_error}")
+            return f"I can help you navigate to the {description}, but the navigation feature is currently unavailable. You can manually navigate using the menu."
+
     except Exception as e:
-        return f"Failed to navigate to {description}. Error: {str(e)}"
+        logger.error(f"Failed to send navigation command: {str(e)}")
+        return f"I tried to navigate to the {description}, but encountered an issue. You can manually navigate using the menu."
