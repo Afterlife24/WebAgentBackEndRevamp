@@ -6,9 +6,7 @@ from livekit.plugins import (
     openai,
     noise_cancellation,
 )
-from mcp_client import MCPServerSse
-from mcp_client.agent_tools import MCPToolsIntegration
-import os
+from livekit.plugins.openai.realtime.realtime_model import TurnDetection
 import logging
 import signal
 import sys
@@ -59,29 +57,20 @@ async def entrypoint(ctx: agents.JobContext):
     try:
         session = AgentSession(
             llm=openai.realtime.RealtimeModel(
-                voice="alloy",  # OpenAI voice options: alloy, echo, fable, onyx, nova, shimmer
-                temperature=0.2,
+                voice="alloy",
+                turn_detection=TurnDetection(
+                    type="server_vad",
+                    threshold=0.5,
+                    prefix_padding_ms=300,
+                    silence_duration_ms=500,
+                ),
             ),
         )
         logger.info(
-            "AgentSession created with OpenAI Realtime Model (voice: alloy)")
+            "AgentSession created with OpenAI Realtime Model (voice: alloy, turn detection: server_vad, transcription language: en)")
 
-        mcp_server_url = os.environ.get("N8N_MCP_SERVER_URL")
-        logger.info(f"MCP Server URL from environment: {mcp_server_url}")
-
-        mcp_server = MCPServerSse(
-            params={"url": mcp_server_url},
-            cache_tools_list=True,
-            name="SSE MCP Server"
-        )
-        logger.info("MCP Server created")
-
-        logger.info("Creating agent with MCP tools integration")
-        agent = await MCPToolsIntegration.create_agent_with_tools(
-            agent_class=Assistant,
-            mcp_servers=[mcp_server]
-        )
-        logger.info("Agent with MCP tools created successfully")
+        agent = Assistant()
+        logger.info("Assistant agent created")
 
         logger.info("Starting session with room and agent")
         await session.start(

@@ -16,10 +16,8 @@ requests
 uuid
 
 # AI / ML
-pydantic-ai-slim[openai,mcp]
+pydantic-ai-slim[openai]
 
 # Timezone
 tzdata
 
-# MCP integration
-mcp-client
