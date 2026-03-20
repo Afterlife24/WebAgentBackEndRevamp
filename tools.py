@@ -22,9 +22,9 @@ async def open_url(url: str, context: RunContext) -> str:
     """
     Opens a URL in the user's default web browser.
 
-    IMPORTANT: Use this ONLY for external websites or links that are NOT part of the Afterlife website.
-    DO NOT use this tool for internal Afterlife pages like about, home, ai-assistants, or any sections.
-    For internal Afterlife website pages, ALWAYS use the navigate_to_section tool instead.
+    IMPORTANT: Use this ONLY for external websites or links that are NOT part of the Autonomic website.
+    DO NOT use this tool for internal Autonomic pages like about, home, ai-assistants, or any sections.
+    For internal Autonomic website pages, ALWAYS use the navigate_to_section tool instead.
 
     Examples of when to use this:
     - User asks to open an external website (e.g., "open google.com")
@@ -33,7 +33,7 @@ async def open_url(url: str, context: RunContext) -> str:
     Examples of when NOT to use this:
     - User asks about the company → Use navigate_to_section("about") instead
     - User asks about AI assistants or the team → Use navigate_to_section("ai-assistants") instead
-    - User wants to see any Afterlife page → Use navigate_to_section() instead
+    - User wants to see any Autonomic page → Use navigate_to_section() instead
     """
     try:
         logger.info(f"[TOOL] open_url called with URL: {url}")
@@ -66,10 +66,10 @@ async def open_url(url: str, context: RunContext) -> str:
 @function_tool
 async def navigate_to_section(section: str, context: RunContext) -> str:
     """
-    Navigates to a specific section or page on the Afterlife website.
+    Navigates to a specific section or page on the Autonomic website.
 
     CRITICAL: This is the PRIMARY tool to use when users ask to open, view, or navigate to ANY page
-    on the Afterlife website. ALWAYS use this tool for internal pages, NEVER use open_url or web search.
+    on the Autonomic website. ALWAYS use this tool for internal pages, NEVER use open_url or web search.
 
     Available sections:
     - "home" or "products": Main page with all three agent products
@@ -91,8 +91,8 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
     When to use this tool:
     - User asks about "about us" or company info → Use navigate_to_section("about")
     - User asks about AI assistants, the team, or workforce → Use navigate_to_section("ai-assistants")
-    - User asks about any Afterlife product or feature → Use navigate_to_section() with appropriate section
-    - User wants to navigate to any page on the Afterlife website → Use this tool
+    - User asks about any Autonomic product or feature → Use navigate_to_section() with appropriate section
+    - User wants to navigate to any page on the Autonomic website → Use this tool
 
     Always ask for user permission before navigating.
 
