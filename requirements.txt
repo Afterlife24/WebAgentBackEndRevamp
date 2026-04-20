@@ -3,8 +3,12 @@ livekit-api
 
 # Agents and plugins
 livekit-agents
-livekit-plugins-openai
+livekit-plugins-groq
+livekit-plugins-cartesia
 livekit-plugins-noise-cancellation
+livekit-plugins-silero
+livekit-plugins-turn-detector
+huggingface_hub
 
 # Flask + async support
 flask[async]
@@ -20,4 +24,3 @@ pydantic-ai-slim[openai]
 
 # Timezone
 tzdata
-

@@ -4,6 +4,93 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# Product catalog — loaded once, served on-demand via tool call instead of
+# bloating the system prompt with ~150 tokens every single LLM turn.
+PRODUCT_CATALOG: dict[str, dict[str, str | list[str]]] = {
+    "telecalling": {
+        "name": "Telecalling Agent",
+        "description": "Customers or leads call a phone number and speak directly with an AI agent using natural conversation.",
+        "capabilities": [
+            "Inbound and outbound calls",
+            "Natural human-friendly voice",
+            "Lead collection and qualification",
+            "Appointment scheduling",
+            "Product/service explanations",
+            "24/7 availability",
+            "CRM and workflow integration",
+        ],
+        "best_for": [
+            "Customer support automation",
+            "Lead qualification",
+            "Appointment booking",
+            "Sales follow-ups",
+            "Call-heavy operations",
+        ],
+    },
+    "web": {
+        "name": "Web Agent",
+        "description": "An interactive AI avatar on a company's website that helps users navigate and interact using voice or chat.",
+        "capabilities": [
+            "Guides visitors across the website",
+            "Automatic page navigation",
+            "Answers product/service questions",
+            "Improves engagement and reduces bounce rate",
+            "Converts visitors into leads",
+            "Interactive browsing without manual typing",
+        ],
+        "best_for": [
+            "E-commerce websites",
+            "SaaS platforms",
+            "Information-heavy websites",
+            "Businesses wanting higher engagement and conversions",
+        ],
+    },
+    "whatsapp": {
+        "name": "WhatsApp Agent",
+        "description": "Customers interact with businesses directly through WhatsApp using AI-driven automated conversation.",
+        "capabilities": [
+            "Instant customer support on WhatsApp",
+            "FAQ handling",
+            "Order and service request intake",
+            "Updates and notifications",
+            "Lead generation",
+            "Multilingual conversation",
+            "24/7 automated response",
+        ],
+        "best_for": [
+            "E-commerce stores",
+            "Service providers",
+            "Local businesses",
+            "Customer engagement and retention",
+        ],
+    },
+}
+
+
+@function_tool
+async def get_product_info(product: str) -> str:
+    """
+    Get details about an Autonomic AI agent product.
+    Call with product = "telecalling", "web", "whatsapp", or "all".
+    """
+    product = product.lower().strip()
+    logger.info(f"[TOOL] get_product_info called with product: {product}")
+
+    if product == "all":
+        lines: list[str] = []
+        for key, info in PRODUCT_CATALOG.items():
+            lines.append(f"{info['name']}: {info['description']}")
+        return " | ".join(lines)
+
+    info = PRODUCT_CATALOG.get(product)
+    if not info:
+        available = ", ".join(PRODUCT_CATALOG.keys())
+        return f"Unknown product '{product}'. Available: {available}, or 'all'."
+
+    caps = ", ".join(str(c) for c in info["capabilities"])
+    fits = ", ".join(str(f) for f in info["best_for"])
+    return f"{info['name']}: {info['description']} Capabilities: {caps}. Best for: {fits}."
+
 
 def _get_room_and_remote_identity(context: RunContext):
     """Helper to extract room and remote participant identity from context."""
@@ -20,20 +107,8 @@ def _get_room_and_remote_identity(context: RunContext):
 @function_tool
 async def open_url(url: str, context: RunContext) -> str:
     """
-    Opens a URL in the user's default web browser.
-
-    IMPORTANT: Use this ONLY for external websites or links that are NOT part of the Autonomic website.
-    DO NOT use this tool for internal Autonomic pages like about, home, ai-assistants, or any sections.
-    For internal Autonomic website pages, ALWAYS use the navigate_to_section tool instead.
-
-    Examples of when to use this:
-    - User asks to open an external website (e.g., "open google.com")
-    - User provides a specific external URL
-
-    Examples of when NOT to use this:
-    - User asks about the company → Use navigate_to_section("about") instead
-    - User asks about AI assistants or the team → Use navigate_to_section("ai-assistants") instead
-    - User wants to see any Autonomic page → Use navigate_to_section() instead
+    Open an external URL in the user's browser.
+    Only for non-Autonomic websites. For Autonomic pages use navigate_to_section.
     """
     try:
         logger.info(f"[TOOL] open_url called with URL: {url}")
@@ -66,41 +141,12 @@ async def open_url(url: str, context: RunContext) -> str:
 @function_tool
 async def navigate_to_section(section: str, context: RunContext) -> str:
     """
-    Navigates to a specific section or page on the Autonomic website.
+    Navigate to a page or section on the Autonomic website.
+    Use for all internal navigation. Ask permission first.
 
-    CRITICAL: This is the PRIMARY tool to use when users ask to open, view, or navigate to ANY page
-    on the Autonomic website. ALWAYS use this tool for internal pages, NEVER use open_url or web search.
-
-    Available sections:
-    - "home" or "products": Main page with all three agent products
-    - "voice" or "calling": Voice/Calling Agent section on home page
-    - "web": Web Agent section on home page
-    - "whatsapp": WhatsApp Agent section on home page
-    - "vision": Vision section (company mission and values)
-    - "services": Services section (what we offer)
-    - "testimonials": Customer testimonials section
-    - "about": About us page - USE THIS when user asks about the company
-    - "ai-assistants" or "teams": AI Assistants page showcasing the AI workforce
-    - "meet-assistants": Meet Our AI Assistants CTA banner on the home page
-    - "demo": Featured Real Estate Demo section on AI Assistants page
-    - "ai-workforce": AI Workforce grid (receptionist, admin, sales agents) on AI Assistants page
-    - "whatsapp-agent": WhatsApp Agent details section on AI Assistants page
-    - "web-agent": Web Agent details section on AI Assistants page
-    - "industries": Industries section on AI Assistants page
-
-    When to use this tool:
-    - User asks about "about us" or company info → Use navigate_to_section("about")
-    - User asks about AI assistants, the team, or workforce → Use navigate_to_section("ai-assistants")
-    - User asks about any Autonomic product or feature → Use navigate_to_section() with appropriate section
-    - User wants to navigate to any page on the Autonomic website → Use this tool
-
-    Always ask for user permission before navigating.
-
-    Args:
-        section: The section name to navigate to (e.g., "voice", "ai-assistants", "about")
-
-    Returns:
-        A message indicating the navigation action
+    section must be one of: home, voice, calling, web, whatsapp, vision, services,
+    testimonials, about, ai-assistants, teams, meet-assistants, demo, ai-workforce,
+    whatsapp-agent, web-agent, industries, solutions, additional-services, careers, blog.
     """
     section = section.lower().strip()
     logger.info(f"[TOOL] navigate_to_section called with section: {section}")
@@ -126,6 +172,10 @@ async def navigate_to_section(section: str, context: RunContext) -> str:
         "whatsapp-agent": ("/ai-assistants", "whatsapp-agent", "WhatsApp Agent details section"),
         "web-agent": ("/ai-assistants", "web-agent", "Web Agent details section"),
         "industries": ("/ai-assistants", "industries", "Industries section"),
+        "solutions": ("/solutions", None, "Solutions page with complete range of AI solutions and services"),
+        "additional-services": ("/solutions", None, "Solutions page with complete range of AI solutions and services"),
+        "careers": ("/careers", None, "Careers page"),
+        "blog": ("/blog", None, "Blog page"),
     }
 
     if section not in section_map:
