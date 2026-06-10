@@ -141,39 +141,43 @@ async def open_url(url: str, context: RunContext) -> str:
 @function_tool
 async def navigate_to_section(section: str, context: RunContext) -> str:
     """
-    Navigate to a page or section on the Autonomiq website.
+    Navigate to a page on the Autonomiq website.
     Use for all internal navigation. Ask permission first.
 
-    section must be one of: home, voice, calling, web, whatsapp, vision, services,
-    testimonials, about, ai-assistants, teams, meet-assistants, demo, ai-workforce,
-    whatsapp-agent, web-agent, industries, solutions, additional-services, careers, blog.
+    The home page is a fullscreen 3D avatar landing — it has NO content sections.
+    All content lives on separate pages.
+
+    section must be one of: home, about, ai-assistants, teams, voice, calling,
+    web, whatsapp, demo, ai-workforce, whatsapp-agent, web-agent, industries,
+    solutions, additional-services, careers, blog.
     """
     section = section.lower().strip()
     logger.info(f"[TOOL] navigate_to_section called with section: {section}")
 
     # Map sections to (path, section_id, description)
-    # path = React Router path, section_id = optional id for scroll/expand
+    # path = React Router path, section_id = optional id for scroll within that page
+    # Home ("/") has NO sections — it's just the avatar landing.
     section_map = {
-        "home": ("/", None, "home page"),
-        "products": ("/", None, "products section"),
-        "voice": ("/", "voice", "Voice/Calling Agent section"),
-        "calling": ("/", "voice", "Voice/Calling Agent section"),
-        "web": ("/", "web", "Web Agent section"),
-        "whatsapp": ("/", "whatsapp", "WhatsApp Agent section"),
-        "vision": ("/", "vision", "Vision section"),
-        "services": ("/", "services", "Services section"),
-        "testimonials": ("/", "testimonials", "Testimonials section"),
+        "home": ("/", None, "home page (avatar landing)"),
         "about": ("/about", None, "About page"),
+        "vision": ("/about", None, "About page (includes company vision)"),
         "ai-assistants": ("/ai-assistants", None, "AI Assistants page"),
         "teams": ("/ai-assistants", None, "AI Assistants page"),
-        "meet-assistants": ("/", "meet-assistants", "Meet Our AI Assistants section"),
+        "products": ("/ai-assistants", None, "AI Assistants page (product overview)"),
+        "voice": ("/ai-assistants", None, "AI Assistants page (Voice/Calling Agent)"),
+        "calling": ("/ai-assistants", None, "AI Assistants page (Voice/Calling Agent)"),
+        "web": ("/ai-assistants", None, "AI Assistants page (Web Agent)"),
+        "whatsapp": ("/ai-assistants", None, "AI Assistants page (WhatsApp Agent)"),
+        "meet-assistants": ("/ai-assistants", None, "AI Assistants page"),
         "demo": ("/ai-assistants", "demo", "Featured Real Estate Demo section"),
         "ai-workforce": ("/ai-assistants", "ai-workforce", "AI Workforce grid"),
         "whatsapp-agent": ("/ai-assistants", "whatsapp-agent", "WhatsApp Agent details section"),
         "web-agent": ("/ai-assistants", "web-agent", "Web Agent details section"),
         "industries": ("/ai-assistants", "industries", "Industries section"),
-        "solutions": ("/solutions", None, "Solutions page with complete range of AI solutions and services"),
-        "additional-services": ("/solutions", None, "Solutions page with complete range of AI solutions and services"),
+        "services": ("/solutions", None, "Solutions page"),
+        "solutions": ("/solutions", None, "Solutions page"),
+        "additional-services": ("/solutions", None, "Solutions page"),
+        "testimonials": ("/about", None, "About page (includes testimonials)"),
         "careers": ("/careers", None, "Careers page"),
         "blog": ("/blog", None, "Blog page"),
     }
