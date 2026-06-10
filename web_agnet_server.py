@@ -1,6 +1,5 @@
 import os
-from livekit import api
-from livekit.api import LiveKitAPI, ListRoomsRequest, WebhookReceiver
+from livekit.api import AccessToken, VideoGrants, LiveKitAPI, ListRoomsRequest, WebhookReceiver
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from flask_cors import CORS
@@ -18,7 +17,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 app = Flask(__name__)
 
@@ -80,9 +79,13 @@ async def generate_room_name():
 
 
 async def get_rooms():
-    api = LiveKitAPI()
-    rooms = await api.room.list_rooms(ListRoomsRequest())
-    await api.aclose()
+    lk_api = LiveKitAPI(
+        url=os.getenv("LIVEKIT_URL"),
+        api_key=os.getenv("LIVEKIT_API_KEY"),
+        api_secret=os.getenv("LIVEKIT_API_SECRET"),
+    )
+    rooms = await lk_api.room.list_rooms(ListRoomsRequest())
+    await lk_api.aclose()
     return [room.name for room in rooms.rooms]
 
 
@@ -123,10 +126,10 @@ async def get_token():
             return jsonify({"error": "LiveKit credentials not configured"}), 500
 
         logger.info("Creating LiveKit access token")
-        token = api.AccessToken(api_key, api_secret) \
+        token = AccessToken(api_key, api_secret) \
             .with_identity(name)\
             .with_name(name)\
-            .with_grants(api.VideoGrants(
+            .with_grants(VideoGrants(
                 room_join=True,
                 room=room,
                 # 5.5 — Explicit least-privilege grants

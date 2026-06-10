@@ -70,7 +70,7 @@ PRODUCT_CATALOG: dict[str, dict[str, str | list[str]]] = {
 @function_tool
 async def get_product_info(product: str) -> str:
     """
-    Get details about an Autonomic AI agent product.
+    Get details about an Autonomiq AI agent product.
     Call with product = "telecalling", "web", "whatsapp", or "all".
     """
     product = product.lower().strip()
@@ -108,7 +108,7 @@ def _get_room_and_remote_identity(context: RunContext):
 async def open_url(url: str, context: RunContext) -> str:
     """
     Open an external URL in the user's browser.
-    Only for non-Autonomic websites. For Autonomic pages use navigate_to_section.
+    Only for non-Autonomiq websites. For Autonomiq pages use navigate_to_section.
     """
     try:
         logger.info(f"[TOOL] open_url called with URL: {url}")
@@ -141,7 +141,7 @@ async def open_url(url: str, context: RunContext) -> str:
 @function_tool
 async def navigate_to_section(section: str, context: RunContext) -> str:
     """
-    Navigate to a page or section on the Autonomic website.
+    Navigate to a page or section on the Autonomiq website.
     Use for all internal navigation. Ask permission first.
 
     section must be one of: home, voice, calling, web, whatsapp, vision, services,

@@ -55,7 +55,7 @@ def signal_handler(signum, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-load_dotenv()
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 # Language-specific Cartesia configuration
 # STT: ink-whisper supports multilingual input
@@ -69,7 +69,7 @@ LANGUAGE_CONFIG: dict[str, dict[str, str]] = {
 # Sliding window: keep last N conversation items to cap per-turn input tokens.
 # 70b-versatile uses ~2400 tokens/request. Groq free tier = 12k TPM.
 # 10 items keeps enough context for the model to remember tool-calling format.
-MAX_HISTORY_ITEMS = 10  # ~5 user + 5 assistant turns
+MAX_HISTORY_ITEMS = 12  # ~6 user + 6 assistant turns
 
 
 # Regex to strip Llama-style function call syntax that leaks into text output
@@ -186,10 +186,10 @@ async def entrypoint(ctx: agents.JobContext):
                 interruption=InterruptionOptions(
                     enabled=True,
                     mode="adaptive",
-                    min_duration=0.5,
-                    min_words=0,
+                    min_duration=0.3,
+                    min_words=1,
                     resume_false_interruption=True,
-                    false_interruption_timeout=2.0,
+                    false_interruption_timeout=1.5,
                 ),
             ),
             # 5.4 — Emit "away" state after 30s of user silence
